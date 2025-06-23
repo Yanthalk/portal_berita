@@ -34,7 +34,7 @@ class News extends Model
         return $this->belongsTo(Category::class, 'category_id', 'category_id');
     }
 
-    public function komentar()
+    public function Comments()
     {
         return $this->hasMany(Comments::class, 'news_id', 'news_id');
     }

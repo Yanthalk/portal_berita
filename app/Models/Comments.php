@@ -18,13 +18,13 @@ class Comments extends Model
     ];
 
     // Relasi ke user
-    public function user()
+    public function User()
     {
         return $this->belongsTo(User::class, 'user_id', 'user_id');
     }
 
     // Relasi ke berita
-    public function berita()
+    public function News()
     {
         return $this->belongsTo(News::class, 'news_id', 'news_id');
     }

@@ -16,7 +16,7 @@ class CreateCommentsTable extends Migration
             $table->unsignedInteger('news_id');
 
             $table->foreign('user_id')->references('user_id')->on('users')->onDelete('cascade')->onUpdate('cascade');
-            $table->foreign('news_id')->references('news_id')->on('berita')->onDelete('cascade')->onUpdate('cascade');
+            $table->foreign('news_id')->references('news_id')->on('news')->onDelete('cascade')->onUpdate('cascade');
         });
     }
 
