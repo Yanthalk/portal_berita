@@ -63,6 +63,7 @@ class NewsController extends Controller
                     'judul' => $berita->judul,
                     'id' => $berita->news_id,
                     'description' => $berita->deskripsi,
+                    'content'     => $berita->konten,
                     'image_url' => $berita->gambar ? asset('storage/' . $berita->gambar) : asset('images/post-berita.jpg'),
                     'pubDate' => $berita->tanggal_publish,
                     'category' => [$berita->category->nama_kategori ?? 'Umum'],
@@ -113,7 +114,7 @@ class NewsController extends Controller
                 'tanggal' => $berita->tanggal_publish,
                 'penulis' => $berita->penulis,
                 'gambar' => $berita->gambar ? asset('storage/' . $berita->gambar) : null,
-                'konten' => $berita->isi,
+                'konten' => $berita->konten,
                 'komentar' => $berita->komentar,
                 'id' => $berita->news_id,
             ]);

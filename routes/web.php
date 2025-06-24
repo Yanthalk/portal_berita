@@ -32,7 +32,6 @@ Route::get('/search-berita', [NewsController::class, 'search'])->name('berita.se
 Route::get('/cari', [NewsController::class, 'cari'])->name('berita.cari'); 
 Route::get('/berita-cari/{id}', [NewsController::class, 'viewBeritaCari'])->name('view-berita-cari');
 
-
 // Kategori
 Route::get('/kategori/{slug}', [KategoriController::class, 'tampilkanBerita'])->name('kategori.show');
 Route::get('/kategori/detail/{id}', [KategoriController::class, 'showDetail'])->name('kategori.detail');

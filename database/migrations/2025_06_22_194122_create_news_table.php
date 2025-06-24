@@ -16,10 +16,8 @@ class CreateNewsTable extends Migration
             $table->longText('konten');
             $table->string('gambar');
             $table->string('penulis');
-            $table->unsignedInteger('user_id');
             $table->unsignedInteger('category_id');
-
-            $table->foreign('user_id')->references('user_id')->on('users')->onDelete('cascade')->onUpdate('cascade');
+            
             $table->foreign('category_id')->references('category_id')->on('category')->onDelete('cascade')->onUpdate('cascade');
         });
     }

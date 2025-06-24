@@ -11,7 +11,6 @@ class NewsSeeder extends Seeder
 {
     public function run()
     {
-        $user_id = 1; // Pastikan user ini ada
         $gambarList = ['berita/berita1.jpg', 'berita/berita2.jpg'];
 
         foreach (range(1, 10) as $category_id) {
@@ -23,7 +22,6 @@ class NewsSeeder extends Seeder
                     'konten' => Str::random(300),
                     'gambar' => $gambarList[($category_id + $i) % 2],
                     'penulis' => "Penulis $i",
-                    'user_id' => $user_id,
                     'category_id' => $category_id,
                 ]);
             }
