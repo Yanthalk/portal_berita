@@ -5,9 +5,10 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\News;
 use App\Models\Category;
+use App\Models\Comments;
 use App\Services\NewsDataService;
-use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
 use Carbon\Carbon;
 
 class KategoriController extends Controller
@@ -25,6 +26,7 @@ class KategoriController extends Controller
 
         $configKategori = config('kategori');
         $kategoriNama = $configKategori[$slug] ?? null;
+
         if (!$kategoriNama) {
             abort(404);
         }
@@ -36,7 +38,7 @@ class KategoriController extends Controller
         $apiResults = $this->newsService->getTopHeadlines('id', $slug, 100);
         $apiArticles = collect($apiResults)->map(function ($article) {
             return [
-                'id'          => $article['article_id'] ?? uniqid(),
+                'id'          => $article['article_id'] ?? null,
                 'article_id'  => $article['article_id'] ?? null,
                 'title'       => $article['title'] ?? null,
                 'description' => $article['description'] ?? null,
@@ -50,7 +52,7 @@ class KategoriController extends Controller
             ];
         });
 
-        // Ambil berita dari DB
+        // Ambil berita dari DB lokal
         $localArticles = News::with('category')
             ->when($kategoriID, fn($q) => $q->where('category_id', $kategoriID))
             ->orderByDesc('tanggal_publish')
@@ -69,15 +71,89 @@ class KategoriController extends Controller
                     'source'      => 'local'
                 ];
             });
-        logger()->info('Local Articles:', $localArticles->toArray());
 
-        // Gabungkan dan urutkan
+        // Gabungkan dan urutkan berdasarkan tanggal terbaru
         $allArticles = $apiArticles->merge($localArticles)->sortByDesc('pubDate')->values();
 
         return view('kategori', [
             'kategori' => ucfirst($kategoriNama),
-            'article' => $allArticles
+            'slug'     => $slug,
+            'article'  => $allArticles
         ]);
     }
 
+    public function showDetail(Request $request, $id)
+    {
+        $source = $request->query('source');
+
+        if ($source === 'local') {
+            $berita = News::where('news_id', $id)->firstOrFail();
+            $komentar = Comments::where('news_id', $id)
+                ->orderByDesc('tanggal_komentar')
+                ->with('user')
+                ->get();
+
+            return view('view-berita', [
+                'id'       => $berita->news_id,
+                'judul'    => $berita->judul,
+                'tanggal'  => $berita->tanggal_publish,
+                'penulis'  => $berita->penulis,
+                'gambar'   => $berita->gambar ? asset('storage/' . $berita->gambar) : null,
+                'konten'   => $berita->konten,
+                'komentar' => $komentar,
+            ]);
+        }
+
+        if ($source === 'api') {
+            $slug = strtolower($request->query('kategori'));
+            $kategoriMap = config('kategori');
+            $kategoriName = $kategoriMap[$slug] ?? null;
+
+            if (!$kategoriName) {
+                abort(404);
+            }
+
+            $rawData = $this->newsService->getTopHeadlines('id', $slug, 100);
+            $article = collect($rawData)->firstWhere('article_id', $id);
+
+            if (!$article) {
+                abort(404);
+            }
+
+            $konten = strlen($article['content'] ?? '') < 30
+                ? ($article['description'] ?? 'Tidak tersedia')
+                : $article['content'];
+
+            return view('view-berita-kategori', [
+                'judul'    => $article['title'] ?? 'Judul Tidak Tersedia',
+                'tanggal'  => \Carbon\Carbon::parse($article['pubDate'])->format('d/m/y, H:i') . ' WIB',
+                'penulis'  => data_get($article, 'creator.0', 'Anonim'),
+                'gambar'   => $article['image_url'] ?? null,
+                'konten'   => $konten,
+                'komentar' => null,
+            ]);
+        }
+
+        abort(404);
+    }
+
+    public function kirimKomentar(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'komentar' => 'required|string|max:1000',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        Comments::create([
+            'komentar'         => $request->komentar,
+            'tanggal_komentar' => Carbon::now(),
+            'user_id'          => Auth::user()->user_id,
+            'news_id'          => $id
+        ]);
+
+        return redirect()->back()->with('success', 'Komentar berhasil dikirim.');
+    }
 }

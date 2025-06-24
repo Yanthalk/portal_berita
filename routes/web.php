@@ -30,9 +30,12 @@ Route::post('/berita/view/{id}/komentar', [HomeController::class, 'kirimKomentar
 // Pencarian
 Route::get('/search-berita', [NewsController::class, 'search'])->name('berita.search.json'); // untuk AJAX/autocomplete
 Route::get('/cari', [NewsController::class, 'cari'])->name('berita.cari'); // untuk hasil pencarian penuh
+Route::get('/berita-cari/{id}', [NewsController::class, 'viewBeritaCari'])->name('view-berita-cari');
 
 // Kategori
 Route::get('/kategori/{slug}', [KategoriController::class, 'tampilkanBerita'])->name('kategori.show');
+Route::get('/kategori/detail/{id}', [KategoriController::class, 'showDetail'])->name('kategori.detail');
+Route::post('/kategori/detail/{id}/komentar', [KategoriController::class, 'kirimKomentar'])->name('kategori.kirimKomentar');
 
 // Profile
 Route::middleware('auth')->group(function () {

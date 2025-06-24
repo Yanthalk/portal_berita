@@ -18,9 +18,10 @@
             {{-- Headline --}}
             @if ($article->count() > 0)
                 @php $headline = $article[0]; @endphp
-                <a href="{{ route('view-berita', ['id' => $headline['id'], 'source' => $headline['source']]) }}" class="block relative">
+                <a href="{{ route('kategori.detail', ['id' => $headline['id'], 'source' => $headline['source'], 'kategori' => $slug]) }}"
+                    class="relative block rounded overflow-hidden">
                     <img src="{{ $headline['image_url'] ?? asset('images/post-berita.jpg') }}" alt="Headline"
-                         class="w-full h-[550px] object-cover rounded">
+                        class="w-full h-[550px] object-cover">
                     <div class="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black to-transparent text-white p-4">
                         <span class="bg-gray-800 text-blue-400 text-xs px-2 py-1 rounded font-bold">HEADLINE</span>
                         <h2 class="text-xl font-semibold mt-2">{{ $headline['title'] }}</h2>
@@ -34,7 +35,7 @@
             {{-- 4 Sub Berita --}}
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                 @foreach ($article->slice(1, 4) as $berita)
-                    <a href="{{ route('view-berita', ['id' => $berita['id'], 'source' => $berita['source']]) }}">
+                    <a href="{{ route('kategori.detail', ['id' => $berita['id'], 'source' => $berita['source'], 'kategori' => $slug]) }}">
                         <div class="bg-black text-white rounded overflow-hidden">
                             <img src="{{ $berita['image_url'] ?? asset('images/post-berita.jpg') }}"
                                  class="w-full h-32 object-cover border-b border-gray-600">
@@ -65,7 +66,7 @@
                             </span>
                             <span class="italic text-[10px]">Sumber: {{ $berita['source'] === 'api' ? 'News API' : 'Lokal' }}</span>
                         </div>
-                        <a href="{{ route('view-berita', ['id' => $berita['id'], 'source' => $berita['source']]) }}"
+                        <a href="{{ route('kategori.detail', ['id' => $berita['id'], 'source' => $berita['source'], 'kategori' => $slug]) }}"
                            class="mt-2 text-blue-600 font-semibold hover:underline">
                             Baca Selengkapnya
                         </a>
