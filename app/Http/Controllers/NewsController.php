@@ -4,10 +4,9 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\News;
-use App\Models\Komentar;
 use App\Services\NewsDataService;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 
 class NewsController extends Controller
 {
@@ -17,6 +16,7 @@ class NewsController extends Controller
         if (!$query || strlen($query) < 2) {
             return response()->json([]);
         }
+
 
         $localResults = News::where('judul', 'LIKE', "%{$query}%")
             ->get()
@@ -28,9 +28,11 @@ class NewsController extends Controller
                 ];
             });
 
+
         $newsService = new NewsDataService();
         $apiResponse = $newsService->search($query);
         $apiResults = [];
+
 
         if (isset($apiResponse['results'])) {
             $apiResults = collect($apiResponse['results'])
@@ -40,12 +42,11 @@ class NewsController extends Controller
                         'source' => 'api',
                         'id' => $index,
                         'judul' => $article['title'],
-                        'url' => route('view-berita-cari', [
-                            'id' => $article['article_id'] ?? uniqid()
-                        ]) . '?source=api&judul=' . urlencode($article['title'])
+                        'url' => $article['link'],
                     ];
                 });
         }
+
 
         $results = $localResults->merge($apiResults);
         return response()->json($results);
@@ -63,10 +64,10 @@ class NewsController extends Controller
                     'judul' => $berita->judul,
                     'id' => $berita->news_id,
                     'description' => $berita->deskripsi,
-                    'image_url' => $berita->gambar ? asset('storage/' . $berita->gambar) : asset('images/post-berita.jpg'),
+                    'image_url' => $berita->gambar ? asset('storage/' . $berita->gambar) : null,
                     'pubDate' => $berita->tanggal_publish,
                     'category' => [$berita->category->nama_kategori ?? 'Umum'],
-                    'url' => route('view-berita-cari', ['id' => $berita->news_id, 'source' => 'local'])
+                    'url' => route('view-berita', ['id' => $berita->news_id, 'source' => 'local']),
                 ];
             });
 
@@ -82,13 +83,11 @@ class NewsController extends Controller
                         'source' => 'api',
                         'judul' => $article['title'],
                         'id' => $article['article_id'] ?? uniqid(),
-                        'description' => $article['description'] ?? 'Tidak ada deskripsi.',
+                        'description' => $article['description'] ?? '',
                         'image_url' => $article['image_url'] ?? asset('images/post-berita.jpg'),
                         'pubDate' => $article['pubDate'] ?? now(),
                         'category' => is_array($article['category']) ? $article['category'] : [$article['category'] ?? 'Umum'],
-                        'url' => route('view-berita-cari', [
-                            'id' => $article['article_id'] ?? uniqid()
-                        ]) . '?source=api&judul=' . urlencode($article['title'])
+                        'url' => route('view-berita', ['id' => $article['article_id'] ?? uniqid(), 'source' => 'api']),
                     ];
                 });
         }
@@ -101,51 +100,4 @@ class NewsController extends Controller
         ]);
     }
 
-    public function viewBeritaCari(Request $request, $id)
-    {
-        $source = $request->query('source');
-
-        if ($source === 'local') {
-            $berita = News::with('category')->where('news_id', $id)->firstOrFail();
-
-            return view('view-berita-cari', [
-                'judul' => $berita->judul,
-                'tanggal' => $berita->tanggal_publish,
-                'penulis' => $berita->penulis,
-                'gambar' => $berita->gambar ? asset('storage/' . $berita->gambar) : null,
-                'konten' => $berita->isi,
-                'komentar' => $berita->komentar,
-                'id' => $berita->news_id,
-            ]);
-        } elseif ($source === 'api') {
-            $judul = $request->query('judul');
-
-            if (!$judul) {
-                abort(404);
-            }
-
-            $newsService = new NewsDataService();
-            $rawData = $newsService->search($judul);
-            $article = collect($rawData['results'] ?? [])->firstWhere('title', $judul);
-
-            if (!$article) {
-                abort(404);
-            }
-
-            $konten = strlen($article['content'] ?? '') < 30
-                ? ($article['description'] ?? 'Tidak tersedia')
-                : $article['content'];
-
-            return view('view-berita-cari', [
-                'judul' => $article['title'] ?? 'Judul Tidak Tersedia',
-                'tanggal' => \Carbon\Carbon::parse($article['pubDate'])->format('d/m/y, H:i') . ' WIB',
-                'penulis' => data_get($article, 'creator.0', 'Anonim'),
-                'gambar' => $article['image_url'] ?? null,
-                'konten' => $konten,
-                'komentar' => null,
-            ]);
-        } else {
-            abort(404);
-        }
-    }
 }
